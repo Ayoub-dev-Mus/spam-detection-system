@@ -1,5 +1,6 @@
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
+from utils.kafka import KafkaUtils
 from .serializers import ArticleSerializer, CreateArticleSerializer
 from .models import Article
 from rest_framework.response import Response
@@ -9,6 +10,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from rest_framework.exceptions import ValidationError
 from rest_framework.decorators import authentication_classes
+
 @swagger_auto_schema(
     method='get',
     responses={200: ArticleSerializer(many=True)},
@@ -30,6 +32,7 @@ def get_all_articles(request):
     authentication_classes=[JWTAuthentication]
 
 )
+
 @api_view(['POST'])
 @authentication_classes([JWTAuthentication])
 def create_article(request):
@@ -39,6 +42,18 @@ def create_article(request):
         serializer = CreateArticleSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         article = serializer.save()
+
+        # Prepare message data for Kafka
+        message_data = {
+            'article_id': article.id,
+            'title': article.title,
+            'content': article.content
+        }
+
+        # Produce message to Kafka
+        kafka_utils = KafkaUtils()
+        kafka_utils.produce_message(key=str(article.id), message=message_data)
+
         return Response(serializer.data, status=status.HTTP_201_CREATED)
     except ValidationError as e:
         return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
