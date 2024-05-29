@@ -5,6 +5,9 @@ import pickle
 import json
 from sklearn.feature_extraction.text import CountVectorizer
 import asyncio
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+import os
 
 app = FastAPI()
 
@@ -31,9 +34,9 @@ vectorizer = None
 
 def load_model_and_vectorizer():
     global model, vectorizer
-    with open('spam_model.pkl', 'rb') as model_file:
+    with open('./model_script/spam_model.pkl', 'rb') as model_file:
         model = pickle.load(model_file)
-    with open('vectorizer.pkl', 'rb') as vectorizer_file:
+    with open('./model_script/vectorizer.pkl', 'rb') as vectorizer_file:
         vectorizer = pickle.load(vectorizer_file)
 
 load_model_and_vectorizer()
@@ -73,11 +76,31 @@ async def kafka_consumer_task():
         consumer.close()
         print("Consumer closed")
 
+class ModelFileHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if event.src_path.endswith('spam_model.pkl') or event.src_path.endswith('vectorizer.pkl'):
+            print(f"File {event.src_path} changed, reloading model and vectorizer.")
+            load_model_and_vectorizer()
+
 @app.on_event("startup")
 async def startup_event():
     loop = asyncio.get_running_loop()
     loop.create_task(kafka_consumer_task())
     print("Kafka consumer task added to background tasks")
+
+    event_handler = ModelFileHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path='./model_script', recursive=False)
+    observer.start()
+    app.state.observer = observer  
+    print("File observer started")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    observer = app.state.observer
+    observer.stop()
+    observer.join()
+    print("File observer stopped")
 
 @app.get("/")
 async def root():
