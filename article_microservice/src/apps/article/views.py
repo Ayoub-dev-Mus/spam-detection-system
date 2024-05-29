@@ -43,14 +43,14 @@ def create_article(request):
         serializer.is_valid(raise_exception=True)
         article = serializer.save()
 
-        # Prepare message data for Kafka
+    
         message_data = {
             'article_id': article.id,
             'title': article.title,
             'content': article.content
         }
 
-        # Produce message to Kafka
+
         kafka_utils = KafkaUtils()
         kafka_utils.produce_message(key=str(article.id), message=message_data)
 
