@@ -20,7 +20,7 @@ class KafkaUtils:
             'group.id': 'YOUR_CONSUMER_GROUP',  # Replace with your consumer group ID
             'auto.offset.reset': 'earliest'
         })
-        self.consumer.subscribe(['created_articles'])
+        self.consumer.subscribe(['spam_articles'])
 
     def produce_message(self, key, message):
         try:
