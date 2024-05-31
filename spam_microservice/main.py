@@ -55,7 +55,7 @@ async def kafka_consumer_task():
             while len(new_messages) < 2:
                 msg = consumer.poll(1.0)
                 if msg is None:
-                    await asyncio.sleep(1)  # Avoid busy-waiting
+                    await asyncio.sleep(1) 
                     continue
                 if msg.error():
                     print(f"Consumer error: {msg.error()}")
@@ -92,7 +92,7 @@ async def startup_event():
     observer = Observer()
     observer.schedule(event_handler, path='./model_script', recursive=False)
     observer.start()
-    app.state.observer = observer  
+    app.state.observer = observer
     print("File observer started")
 
 @app.on_event("shutdown")
