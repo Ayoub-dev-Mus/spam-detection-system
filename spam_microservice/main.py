@@ -43,9 +43,13 @@ load_model_and_vectorizer()
 
 def process_messages(messages: List[dict]):
     contents = [message['content'] for message in messages]
+    article_ids = [message['article_id'] for message in messages] 
     transformed_messages = vectorizer.transform(contents)
     predictions = model.predict(transformed_messages)
-    return [{"spam": str(bool(pred))} for pred in predictions]
+    return [
+        {"article_id": article_id, "is_spam": bool(pred)}
+        for article_id, pred in zip(article_ids, predictions)
+    ]
 
 async def kafka_consumer_task():
     consumer.subscribe(['created_articles'])
@@ -55,7 +59,7 @@ async def kafka_consumer_task():
             while len(new_messages) < 2:
                 msg = consumer.poll(1.0)
                 if msg is None:
-                    await asyncio.sleep(1) 
+                    await asyncio.sleep(1)
                     continue
                 if msg.error():
                     print(f"Consumer error: {msg.error()}")
@@ -104,7 +108,7 @@ async def shutdown_event():
 
 @app.get("/")
 async def root():
-    return {"message": "Welcome to Kafka FastAPI"}
+    return {"message": "Spam Microservice"}
 
 @app.post("/reload_model")
 async def reload_model():

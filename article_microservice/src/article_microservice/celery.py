@@ -16,8 +16,8 @@ def debug_task(self):
     print(f'Request: {self.request!r}')
 
 app.conf.beat_schedule = {
-    'run-every-3-seconds': {
-        'task': 'apps.article.tasks.my_task',
+    'kafka-processing': {
+        'task': 'apps.article.tasks.process_message',
         'schedule': timedelta(seconds=3),
     },
 }

@@ -1,3 +1,5 @@
+import json
+from sqlite3 import DatabaseError
 from django.http import JsonResponse
 from rest_framework.decorators import api_view
 from utils.kafka import KafkaUtils
@@ -43,7 +45,7 @@ def create_article(request):
         serializer.is_valid(raise_exception=True)
         article = serializer.save()
 
-    
+
         message_data = {
             'article_id': article.id,
             'title': article.title,
@@ -60,3 +62,37 @@ def create_article(request):
     except Exception as e:
         print(e)
         return Response({'error': 'server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['PATCH'])
+@authentication_classes([JWTAuthentication])
+def update_article_status(request, article_id):
+    try:
+        is_spam = request.data.get('is_spam')
+        if is_spam is None:
+            return Response({"error": "is_spam field is required"}, status=400)
+        try:
+            article = Article.objects.get(id=article_id)
+            article.is_spam = is_spam
+            article.save()
+            return Response({"message": "Article status updated successfully."}, status=200)
+        except Article.DoesNotExist:
+            return Response({"error": "Article not found"}, status=404)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
+
+    except json.JSONDecodeError:
+        return Response({"error": "Invalid JSON"}, status=400)
+
+
+
+def update_article_in_db(article_id, is_spam):
+    try:
+        article = Article.objects.get(id=article_id)
+        article.is_spam = is_spam
+        article.save()
+        return {"message": "Article status updated successfully."}
+    except Article.DoesNotExist:
+        return {"error": "Article not found.", "status": 404}
+    except DatabaseError as e:
+        return {"error": str(e), "status": 500}
