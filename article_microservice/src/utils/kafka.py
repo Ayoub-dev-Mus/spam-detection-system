@@ -1,26 +1,26 @@
 import json
-import os
 from confluent_kafka import Producer, Consumer
 
 class KafkaUtils:
     def __init__(self):
-       self.producer = Producer({
-            'bootstrap.servers': os.getenv('BOOTSTRAP_SERVERS'),
-            'sasl.mechanism': os.getenv('SASL_MECHANISM'),
-            'security.protocol': os.getenv('SECURITY_PROTOCOL'),
-            'sasl.username': os.getenv('SASL_USERNAME'),
-            'sasl.password': os.getenv('SASL_PASSWORD')
+        self.producer = Producer({
+            'bootstrap.servers': 'caring-doe-7639-eu2-kafka.upstash.io:9092',
+            'sasl.mechanism': 'SCRAM-SHA-256',
+            'security.protocol': 'SASL_SSL',
+            'sasl.username': 'Y2FyaW5nLWRvZS03NjM5JP4WoxPA580OXpol6ekTROh7p0av-gUPRHqRk6Q8CSk',
+            'sasl.password': 'ZTNmNzFhMzYtMjUwYy00MzViLWFhOGUtNmZlOTlmNGY4YTAz'
         })
 
-       self.consumer = Consumer({
-            'bootstrap.servers': os.getenv('BOOTSTRAP_SERVERS'),
-            'sasl.mechanism': os.getenv('SASL_MECHANISM'),
-            'security.protocol': os.getenv('SECURITY_PROTOCOL'),
-            'sasl.username': os.getenv('SASL_USERNAME'),
-            'sasl.password': os.getenv('SASL_PASSWORD'),
-            'group.id': os.getenv('GROUP_ID'),
-            'auto.offset.reset': os.getenv('AUTO_OFFSET_RESET')
+        self.consumer = Consumer({
+            'bootstrap.servers': 'caring-doe-7639-eu2-kafka.upstash.io:9092',
+            'sasl.mechanism': 'SCRAM-SHA-256',
+            'security.protocol': 'SASL_SSL',
+            'sasl.username': 'Y2FyaW5nLWRvZS03NjM5JP4WoxPA580OXpol6ekTROh7p0av-gUPRHqRk6Q8CSk',
+            'sasl.password': 'ZTNmNzFhMzYtMjUwYy00MzViLWFhOGUtNmZlOTlmNGY4YTAz',
+            'group.id': 'YOUR_CONSUMER_GROUP', 
+            'auto.offset.reset': 'earliest'
         })
+        self.consumer.subscribe(['spam_articles'])
 
     def produce_message(self, key, message):
         try:
